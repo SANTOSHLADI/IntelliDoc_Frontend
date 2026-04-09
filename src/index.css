@@ -1,0 +1,119 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #1a3b8b;
+  --primary-light: #2a52c9;
+  --accent: #0887C9;
+  --surface: #f8fafc;
+  --border: #e2e8f0;
+  --text: #1e293b;
+  --text-muted: #64748b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #27489f;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  border-radius: 4px;
+  background: #3182ce;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #e2e8f0;
+}
+
+.custom-scroll,
+.custom-scroll-qa,
+.custom-scroll-resume {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #3182ce #e2e8f0;
+}
+
+.custom-scroll {
+  max-height: 500px;
+}
+
+.custom-scroll-qa {
+  max-height: 500px;
+}
+
+.custom-scroll-resume {
+  max-height: 300px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.btn-gradient {
+  cursor: pointer;
+  border: none;
+  color: white;
+  background-image: linear-gradient(to left, #1e40af, #7c3aed);
+  transition: opacity 0.2s, transform 0.15s;
+}
+
+.btn-gradient:hover {
+  opacity: 0.92;
+  transform: scale(1.02);
+}
+
+.btn-gradient:disabled {
+  cursor: not-allowed;
+  transform: none;
+  background-image: linear-gradient(to left, #6b7280, #374151);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  text-align: left;
+}
+
+th {
+  background: #f8fafc;
+  font-weight: 600;
+}
+
+.bbox-tooltip {
+  position: absolute;
+  z-index: 100;
+  white-space: nowrap;
+  pointer-events: none;
+  border-radius: 6px;
+  background: rgba(55, 65, 81, 0.92);
+  color: white;
+  font-size: 11px;
+  padding: 4px 8px;
+}
