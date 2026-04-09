@@ -3,14 +3,8 @@ import { toast } from 'react-toastify'
 import UploadFile from './UploadFile'
 import CrediqProcessing from './CrediqProcessing'
 
-const DOCUMENT_OPTIONS = [
-  { value: 'identity_card', label: 'Identity Card' },
-  { value: 'Loan Application', label: 'Loan Application' },
-  { value: 'cdsl_report', label: 'CDSL / NDLS Report' },
-  { value: 'bank_statement', label: 'Bank Statement' },
-  { value: 'invoice', label: 'Invoice' },
-  { value: 'ocr_all_documents', label: 'OCR (All Documents)' },
-]
+const DOCUMENT_TYPE = 'ocr_all_documents'
+const DOCUMENT_TYPE_LABEL = 'OCR (All Documents)'
 
 export default function CREDIQ() {
   const [selectedFiles, setSelectedFiles] = useState([])
@@ -19,7 +13,6 @@ export default function CREDIQ() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [isUploadComplete, setIsUploadComplete] = useState(false)
   const [fileKey, setFileKey] = useState(0)
-  const [selectedOption, setSelectedOption] = useState('identity_card')
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files)
@@ -74,18 +67,9 @@ export default function CREDIQ() {
         </div>
 
         <div className="w-full max-w-[300px]">
-          <select
-            value={selectedOption}
-            onChange={(e) => {
-              setSelectedOption(e.target.value)
-              handleReset()
-            }}
-            className="w-full rounded-xl border border-[#cfd7e6] bg-white px-4 py-3 text-[15px] text-slate-700 shadow-sm outline-none transition focus:border-[#214aa6] focus:ring-2 focus:ring-[#214aa6]/15"
-          >
-            {DOCUMENT_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
+          <div className="w-full rounded-xl border border-[#cfd7e6] bg-[#f8fbff] px-4 py-3 text-[15px] font-medium text-slate-700 shadow-sm">
+            {DOCUMENT_TYPE_LABEL}
+          </div>
         </div>
       </div>
 
@@ -101,7 +85,7 @@ export default function CREDIQ() {
             handleFileChange={handleFileChange}
             isUploadComplete={isUploadComplete}
             setIsUploadComplete={setIsUploadComplete}
-            documentType={selectedOption}
+            documentType={DOCUMENT_TYPE}
             fileKey={fileKey}
           />
 
@@ -112,7 +96,7 @@ export default function CREDIQ() {
               isProcessing={isProcessing}
               setIsProcessing={setIsProcessing}
               isUploadComplete={isUploadComplete}
-              selectedOption={selectedOption}
+              selectedOption={DOCUMENT_TYPE}
             />
           )}
         </div>
