@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { toast } from 'react-toastify'
-import { BadgeCheck, Building2, Lock, LogIn, Mail, ShieldCheck, UserRound } from 'lucide-react'
+import { ArrowRight, Lock, Mail, UserRound } from 'lucide-react'
+import cloudthatLogo from '../../CT_logo.png'
 
 const INITIAL_FORM = {
   fullName: '',
@@ -20,10 +21,15 @@ export default function SignUpPage({ onSignUp, onLogin }) {
   const [formData, setFormData] = useState(INITIAL_FORM)
   const [loginData, setLoginData] = useState(INITIAL_LOGIN_FORM)
   const [acceptedTerms, setAcceptedTerms] = useState(false)
-  const [activeView, setActiveView] = useState('signup')
+  const [rememberMe, setRememberMe] = useState(false)
+  const [activeView, setActiveView] = useState('login')
 
   const updateField = (field) => (event) => {
     setFormData((current) => ({ ...current, [field]: event.target.value }))
+  }
+
+  const updateLoginField = (field) => (event) => {
+    setLoginData((current) => ({ ...current, [field]: event.target.value }))
   }
 
   const handleSubmit = (event) => {
@@ -52,10 +58,6 @@ export default function SignUpPage({ onSignUp, onLogin }) {
     }
   }
 
-  const updateLoginField = (field) => (event) => {
-    setLoginData((current) => ({ ...current, [field]: event.target.value }))
-  }
-
   const handleLogin = (event) => {
     event.preventDefault()
 
@@ -68,212 +70,240 @@ export default function SignUpPage({ onSignUp, onLogin }) {
     const didLogin = onLogin?.(loginData)
     if (didLogin) {
       setLoginData(INITIAL_LOGIN_FORM)
+      setRememberMe(false)
     }
   }
 
   return (
-    <div className="overflow-hidden rounded-[24px] border border-[#dbe5f4] bg-[linear-gradient(135deg,#f9fbff_0%,#eef4ff_48%,#f6f9ff_100%)] shadow-[0_20px_50px_rgba(30,58,138,0.08)]">
-      <div className="grid gap-0 lg:grid-cols-[1.08fr_0.92fr]">
-        <section className="relative overflow-hidden border-b border-[#dbe5f4] px-6 py-8 sm:px-8 lg:border-b-0 lg:border-r lg:px-10 lg:py-10">
-          <div className="absolute right-0 top-0 h-44 w-44 rounded-full bg-[#214aa6]/10 blur-3xl" />
-          <div className="absolute bottom-0 left-0 h-40 w-40 rounded-full bg-[#60a5fa]/10 blur-3xl" />
+    <div className="min-h-screen bg-[#eef2f7] px-3 py-3 sm:px-4 sm:py-4">
+      <div className="min-h-[calc(100vh-24px)] overflow-hidden rounded-[28px] border border-[#d7dfeb] bg-white shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+        <div className="h-14 border-b border-[#e9eef5] bg-[#f3f6fa]" />
 
-          <div className="relative max-w-xl">
-            <span className="inline-flex rounded-full border border-[#bfd0ee] bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-[#214aa6]">
-              Create Account
-            </span>
-            <h2 className="mt-5 text-3xl font-semibold tracking-[-0.03em] text-[#17367c] sm:text-4xl">
-              Sign up or log in before opening IntelliDoc
-            </h2>
-            <p className="mt-4 max-w-lg text-sm leading-7 text-slate-600 sm:text-base">
-              Access the IntelliDoc workspace only after authentication, then use the profile icon to view the logged-in account and log out.
-            </p>
-
-            <div className="mt-8 grid gap-4 sm:grid-cols-2">
-              <FeatureCard
-                icon={ShieldCheck}
-                title="Secure onboarding"
-                description="Role-ready access controls and protected document flows from day one."
+        <div className="grid min-h-[calc(100vh-82px)] lg:grid-cols-[1.05fr_0.95fr]">
+          <section className="relative overflow-hidden bg-[#1f5c73] px-8 py-10 text-white sm:px-12 lg:px-14 lg:py-12">
+            <div className="absolute inset-y-0 right-[-120px] hidden w-[240px] rounded-[50%] border-l-[18px] border-[#dce6ef] bg-white lg:block" />
+            <div className="absolute left-[18%] top-[22%] h-2.5 w-2.5 rounded-full bg-white/12" />
+            <div className="absolute left-[52%] top-[42%] h-1.5 w-1.5 rounded-full bg-white/20" />
+            <div className="relative z-10 flex h-full flex-col">
+              <img
+                src={cloudthatLogo}
+                alt="cloudthat"
+                className="h-10 w-auto object-contain sm:h-11"
               />
-              <FeatureCard
-                icon={BadgeCheck}
-                title="Faster verification"
-                description="Bring users, analysts, and operations into one shared workflow."
-              />
-              <FeatureCard
-                icon={Building2}
-                title="Built for teams"
-                description="Set up your company space with room to scale across departments."
-              />
-            </div>
-          </div>
-        </section>
 
-        <section className="bg-white px-6 py-8 sm:px-8 lg:px-10 lg:py-10">
-          <div className="mx-auto max-w-xl">
-            <div className="flex rounded-2xl border border-[#d9e2f2] bg-[#f7faff] p-1">
-              <button
-                type="button"
-                onClick={() => setActiveView('signup')}
-                className={`flex-1 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
-                  activeView === 'signup' ? 'bg-[#214aa6] text-white shadow-sm' : 'text-slate-600'
-                }`}
-              >
-                Sign up
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveView('login')}
-                className={`flex-1 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
-                  activeView === 'login' ? 'bg-[#214aa6] text-white shadow-sm' : 'text-slate-600'
-                }`}
-              >
-                Log in
-              </button>
-            </div>
-
-            {activeView === 'signup' ? (
-              <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
-                <div>
-                  <h3 className="text-2xl font-semibold text-slate-800">Sign up</h3>
-                  <p className="mt-2 text-sm text-slate-500">Create your account and open IntelliDoc.</p>
+              <div className="mt-12 flex flex-1 items-center justify-center">
+                <div className="relative h-[260px] w-full max-w-[430px]">
+                  <div className="absolute left-10 right-10 top-28 h-4 rounded-full bg-[#2d748d]" />
+                  <div className="absolute left-6 top-5 h-24 w-24 rounded-full border border-white/10 bg-white/5" />
+                  <div className="absolute right-8 top-10 h-16 w-16 rounded-full border border-white/10 bg-white/5" />
+                  <div className="absolute left-14 top-28 h-3 w-[230px] rounded-sm bg-[#50627d]" />
+                  <div className="absolute left-14 top-[124px] h-[90px] w-3 bg-[#50627d]" />
+                  <div className="absolute right-[90px] top-[124px] h-[90px] w-3 bg-[#50627d]" />
+                  <div className="absolute left-[120px] top-[36px] h-[92px] w-[126px] rounded-[20px] bg-[#5a6a86] p-2 shadow-[0_14px_24px_rgba(15,23,42,0.18)]">
+                    <div className="flex h-full items-center justify-center rounded-[16px] bg-[#e9eef5]">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full border-[4px] border-[#52647f]">
+                        <div className="ml-1 h-0 w-0 border-b-[10px] border-l-[16px] border-t-[10px] border-b-transparent border-l-[#52647f] border-t-transparent" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="absolute left-[185px] top-[62px] h-[120px] w-[20px] rounded-full bg-[#f3b9bd] rotate-[10deg]" />
+                  <div className="absolute left-[205px] top-[70px] h-[95px] w-[24px] rounded-full bg-[#f6c8cb] -rotate-[6deg]" />
+                  <div className="absolute left-[213px] top-[70px] h-16 w-10 rounded-t-full rounded-b-[18px] bg-[#2d3548]" />
+                  <div className="absolute left-[225px] top-[84px] h-11 w-9 rounded-full bg-[#2d3548]" />
+                  <div className="absolute left-[208px] top-[126px] h-[58px] w-[54px] rounded-[22px] bg-[#8ea7bc]" />
+                  <div className="absolute left-[194px] top-[148px] h-[54px] w-[26px] rounded-full bg-[#2d3548] rotate-[18deg]" />
+                  <div className="absolute left-[224px] top-[156px] h-[54px] w-[28px] rounded-full bg-[#49566f] -rotate-[18deg]" />
+                  <div className="absolute left-[216px] top-[198px] h-[42px] w-[10px] rounded-full bg-[#f6c8cb]" />
+                  <div className="absolute left-[238px] top-[198px] h-[42px] w-[10px] rounded-full bg-[#f6c8cb]" />
+                  <div className="absolute left-[208px] top-[234px] h-2.5 w-6 rounded-full bg-white" />
+                  <div className="absolute left-[233px] top-[232px] h-2.5 w-7 rounded-full bg-white" />
+                  <div className="absolute left-[72px] top-[185px] h-8 w-8 rounded-b-[8px] rounded-t-[12px] bg-[#31455b]" />
+                  <div className="absolute left-[80px] top-[178px] h-4 w-4 rounded-full bg-white" />
                 </div>
+              </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <InputField
-                    label="Full name"
-                    placeholder="Aarav Sharma"
-                    value={formData.fullName}
-                    onChange={updateField('fullName')}
-                    icon={UserRound}
-                  />
-                  <InputField
-                    label="Work email"
+              <div className="relative z-10 max-w-[500px] pb-6">
+                <h1 className="text-4xl font-semibold leading-tight tracking-[-0.04em] sm:text-5xl">
+                  A few more clicks to
+                  <br />
+                  sign in to your account.
+                </h1>
+                <p className="mt-6 text-xl text-white/70">
+                  Manage all your data in one place
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section className="flex items-center justify-center px-6 py-10 sm:px-10 lg:px-12">
+            <div className="w-full max-w-[575px]">
+              {activeView === 'login' ? (
+                <form className="space-y-5" onSubmit={handleLogin}>
+                  <div>
+                    <h2 className="text-4xl font-semibold tracking-[-0.04em] text-[#24324a]">Sign In</h2>
+                  </div>
+
+                  <AuthInput
                     type="email"
-                    placeholder="aarav@company.com"
-                    value={formData.workEmail}
-                    onChange={updateField('workEmail')}
+                    placeholder="Email"
+                    value={loginData.workEmail}
+                    onChange={updateLoginField('workEmail')}
                     icon={Mail}
                   />
-                </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <InputField
-                    label="Company"
-                    placeholder="CloudThat"
-                    value={formData.company}
-                    onChange={updateField('company')}
-                    icon={Building2}
-                  />
-                  <InputField
-                    label="Role"
-                    placeholder="Operations Manager"
-                    value={formData.role}
-                    onChange={updateField('role')}
-                    icon={BadgeCheck}
-                  />
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <InputField
-                    label="Password"
+                  <AuthInput
                     type="password"
-                    placeholder="Create password"
-                    value={formData.password}
-                    onChange={updateField('password')}
+                    placeholder="Password"
+                    value={loginData.password}
+                    onChange={updateLoginField('password')}
                     icon={Lock}
                   />
-                  <InputField
-                    label="Confirm password"
-                    type="password"
-                    placeholder="Repeat password"
-                    value={formData.confirmPassword}
-                    onChange={updateField('confirmPassword')}
-                    icon={Lock}
-                  />
-                </div>
 
-                <label className="flex items-start gap-3 rounded-2xl border border-[#e3eaf7] bg-[#f8fbff] px-4 py-3 text-sm text-slate-600">
-                  <input
-                    type="checkbox"
-                    checked={acceptedTerms}
-                    onChange={(event) => setAcceptedTerms(event.target.checked)}
-                    className="mt-1 h-4 w-4 rounded border-slate-300 text-[#214aa6] focus:ring-[#214aa6]"
-                  />
-                  <span>I agree to the terms, privacy policy, and secure document handling guidelines.</span>
-                </label>
+                  <div className="flex flex-col gap-4 text-[#53657e] sm:flex-row sm:items-center sm:justify-between">
+                    <label className="inline-flex items-center gap-3 text-[15px]">
+                      <input
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={(event) => setRememberMe(event.target.checked)}
+                        className="h-5 w-5 rounded border border-[#d8e1ee] text-[#1f5c73] focus:ring-[#1f5c73]"
+                      />
+                      <span>Remember me</span>
+                    </label>
 
-                <button
-                  type="submit"
-                  className="w-full rounded-2xl bg-[linear-gradient(135deg,#1e3a8a_0%,#214aa6_55%,#4c7cf0_100%)] px-5 py-3.5 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(33,74,166,0.28)] transition hover:translate-y-[-1px]"
-                >
-                  Create account
-                </button>
-              </form>
-            ) : (
-              <form className="mt-6 space-y-5" onSubmit={handleLogin}>
-                <div>
-                  <h3 className="text-2xl font-semibold text-slate-800">Log in</h3>
-                  <p className="mt-2 text-sm text-slate-500">Enter your account details to open IntelliDoc.</p>
-                </div>
+                    <button
+                      type="button"
+                      className="text-[15px] font-medium text-[#53657e] transition hover:text-[#1f5c73]"
+                    >
+                      Forgot Password?
+                    </button>
+                  </div>
 
-                <InputField
-                  label="Work email"
-                  type="email"
-                  placeholder="aarav@company.com"
-                  value={loginData.workEmail}
-                  onChange={updateLoginField('workEmail')}
-                  icon={Mail}
-                />
+                  <div className="flex flex-col gap-4 pt-2 sm:flex-row">
+                    <button
+                      type="submit"
+                      className="inline-flex min-w-[160px] items-center justify-center rounded-xl bg-[#1f5c73] px-8 py-3.5 text-base font-semibold text-white shadow-[0_12px_28px_rgba(31,92,115,0.18)] transition hover:bg-[#184c5f]"
+                    >
+                      Login
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveView('signup')}
+                      className="inline-flex min-w-[160px] items-center justify-center rounded-xl border border-[#dbe4ef] bg-white px-8 py-3.5 text-base font-semibold text-[#647891] transition hover:border-[#1f5c73] hover:text-[#1f5c73]"
+                    >
+                      Register
+                    </button>
+                  </div>
 
-                <InputField
-                  label="Password"
-                  type="password"
-                  placeholder="Enter password"
-                  value={loginData.password}
-                  onChange={updateLoginField('password')}
-                  icon={Lock}
-                />
+                  <p className="pt-6 text-[15px] leading-8 text-[#53657e]">
+                    By signin up, you agree to our{' '}
+                    <button type="button" className="font-medium text-[#f97316]">
+                      Terms and Conditions
+                    </button>{' '}
+                    &amp;{' '}
+                    <button type="button" className="font-medium text-[#1f5c73]">
+                      Privacy Policy
+                    </button>
+                  </p>
+                </form>
+              ) : (
+                <form className="space-y-5" onSubmit={handleSubmit}>
+                  <div>
+                    <h2 className="text-4xl font-semibold tracking-[-0.04em] text-[#24324a]">Register</h2>
+                    <p className="mt-3 text-[15px] leading-7 text-[#6a7c93]">
+                      Create your account to access IntelliDoc.
+                    </p>
+                  </div>
 
-                <button
-                  type="submit"
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#1e3a8a_0%,#214aa6_55%,#4c7cf0_100%)] px-5 py-3.5 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(33,74,166,0.28)] transition hover:translate-y-[-1px]"
-                >
-                  <LogIn className="h-4 w-4" />
-                  Log in
-                </button>
-              </form>
-            )}
-          </div>
-        </section>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <AuthInput
+                      placeholder="Full name"
+                      value={formData.fullName}
+                      onChange={updateField('fullName')}
+                      icon={UserRound}
+                    />
+                    <AuthInput
+                      type="email"
+                      placeholder="Work email"
+                      value={formData.workEmail}
+                      onChange={updateField('workEmail')}
+                      icon={Mail}
+                    />
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <AuthInput
+                      placeholder="Company"
+                      value={formData.company}
+                      onChange={updateField('company')}
+                    />
+                    <AuthInput
+                      placeholder="Role"
+                      value={formData.role}
+                      onChange={updateField('role')}
+                    />
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <AuthInput
+                      type="password"
+                      placeholder="Create password"
+                      value={formData.password}
+                      onChange={updateField('password')}
+                      icon={Lock}
+                    />
+                    <AuthInput
+                      type="password"
+                      placeholder="Confirm password"
+                      value={formData.confirmPassword}
+                      onChange={updateField('confirmPassword')}
+                      icon={Lock}
+                    />
+                  </div>
+
+                  <label className="flex items-start gap-3 text-[15px] leading-7 text-[#53657e]">
+                    <input
+                      type="checkbox"
+                      checked={acceptedTerms}
+                      onChange={(event) => setAcceptedTerms(event.target.checked)}
+                      className="mt-1 h-5 w-5 rounded border border-[#d8e1ee] text-[#1f5c73] focus:ring-[#1f5c73]"
+                    />
+                    <span>I agree to the Terms and Conditions and Privacy Policy.</span>
+                  </label>
+
+                  <div className="flex flex-col gap-4 pt-2 sm:flex-row">
+                    <button
+                      type="submit"
+                      className="inline-flex min-w-[160px] items-center justify-center gap-2 rounded-xl bg-[#1f5c73] px-8 py-3.5 text-base font-semibold text-white shadow-[0_12px_28px_rgba(31,92,115,0.18)] transition hover:bg-[#184c5f]"
+                    >
+                      Create Account
+                      <ArrowRight className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveView('login')}
+                      className="inline-flex min-w-[160px] items-center justify-center rounded-xl border border-[#dbe4ef] bg-white px-8 py-3.5 text-base font-semibold text-[#647891] transition hover:border-[#1f5c73] hover:text-[#1f5c73]"
+                    >
+                      Back to Login
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </section>
+        </div>
       </div>
     </div>
   )
 }
 
-function FeatureCard({ icon: Icon, title, description }) {
+function AuthInput({ icon: Icon, ...props }) {
   return (
-    <div className="rounded-[22px] border border-white/70 bg-white/70 p-5 shadow-[0_16px_30px_rgba(148,163,184,0.12)] backdrop-blur">
-      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#214aa6] text-white shadow-[0_10px_20px_rgba(33,74,166,0.22)]">
-        <Icon className="h-5 w-5" />
-      </div>
-      <h4 className="mt-4 text-base font-semibold text-slate-800">{title}</h4>
-      <p className="mt-2 text-sm leading-6 text-slate-500">{description}</p>
+    <div className="flex items-center gap-3 rounded-xl border border-[#d9e2ee] bg-white px-4 py-4 shadow-[0_6px_16px_rgba(15,23,42,0.03)] transition focus-within:border-[#1f5c73] focus-within:ring-2 focus-within:ring-[#1f5c73]/10">
+      {Icon ? <Icon className="h-4 w-4 shrink-0 text-[#95a4b9]" /> : null}
+      <input
+        {...props}
+        className="w-full border-none bg-transparent text-[17px] text-[#24324a] outline-none placeholder:text-[#a2b0c2]"
+      />
     </div>
-  )
-}
-
-function InputField({ label, icon: Icon, ...props }) {
-  return (
-    <label className="block">
-      <span className="mb-2 block text-sm font-medium text-slate-700">{label}</span>
-      <div className="flex items-center gap-3 rounded-2xl border border-[#d8e2f0] bg-[#fbfdff] px-4 py-3 shadow-sm transition focus-within:border-[#214aa6] focus-within:ring-2 focus-within:ring-[#214aa6]/10">
-        <Icon className="h-4 w-4 text-slate-400" />
-        <input
-          {...props}
-          className="w-full border-none bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
-        />
-      </div>
-    </label>
   )
 }
