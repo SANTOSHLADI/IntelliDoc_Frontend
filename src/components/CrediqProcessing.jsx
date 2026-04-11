@@ -104,7 +104,7 @@ function tryParseJson(str) {
   return str
 }
 
-function DynamicData({ data: dynamicData }) {
+function DynamicData({ data: dynamicData, searchQuery = '' }) {
   // Handle OCR output (string or object from /api/ocr)
   if (dynamicData?.isOcrResult) {
     const rawOutput = dynamicData.output
@@ -463,7 +463,7 @@ export default function CrediqProcessing({
               />
             </div>
           )}
-          <DynamicData data={processData} />
+          <DynamicData data={processData} searchQuery={searchQuery} />
         </>
       )}
     </div>
