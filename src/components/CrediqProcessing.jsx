@@ -159,13 +159,37 @@ function DynamicData({ data: dynamicData, searchQuery = '' }) {
           Found <strong>{results.length}</strong> document{results.length > 1 ? 's' : ''} matching your search
         </p>
         {results.map((result, i) => {
-          // Extract only the part of preview that matches the search query
           const preview = result.preview || ''
-          const parts = preview.split('|').map(p => p.trim()).filter(Boolean)
-          const matchedParts = parts.filter(p =>
-            p.toLowerCase().includes(searchQuery.toLowerCase())
+          // Split by | and find all key:value pairs that contain the search term
+          const allParts = preview.split('|').map(p => p.trim()).filter(Boolean)
+          
+          // Parse each part into {key, value} — take only the last two segments of nested keys
+          const parsed = allParts.map(part => {
+            const segments = part.split(': ')
+            if (segments.length >= 2) {
+              const val = segments[segments.length - 1]
+              const key = segments[segments.length - 2]
+              return { key, val, full: part }
+            }
+            return { key: '', val: part, full: part }
+          })
+
+          // Filter to only show parts that match the search query
+          const matched = parsed.filter(p =>
+            p.full.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            p.key.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            p.val.toLowerCase().includes(searchQuery.toLowerCase())
           )
-          const displayParts = matchedParts.length > 0 ? matchedParts : parts.slice(0, 3)
+          const display = matched.length > 0 ? matched : parsed.slice(0, 5)
+
+          // Deduplicate by key+val
+          const seen = new Set()
+          const unique = display.filter(p => {
+            const k = p.key + p.val
+            if (seen.has(k)) return false
+            seen.add(k)
+            return true
+          })
 
           return (
             <div key={i} className="rounded-xl border border-[#d8e0ef] bg-white p-4 shadow-sm">
@@ -178,20 +202,12 @@ function DynamicData({ data: dynamicData, searchQuery = '' }) {
               <div className="rounded-lg bg-[#f4f6fa] px-4 py-3 text-sm text-slate-700">
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Matched Fields</p>
                 <div className="flex flex-col gap-1">
-                  {displayParts.map((part, pi) => {
-                    const colonIdx = part.indexOf(': ')
-                    if (colonIdx > 0) {
-                      const key = part.slice(0, colonIdx)
-                      const val = part.slice(colonIdx + 2)
-                      return (
-                        <div key={pi} className="flex gap-2">
-                          <span className="min-w-[120px] font-medium text-slate-500">{key}</span>
-                          <span className="text-slate-700">{val}</span>
-                        </div>
-                      )
-                    }
-                    return <p key={pi}>{part}</p>
-                  })}
+                  {unique.map((p, pi) => (
+                    <div key={pi} className="flex gap-2 border-b border-slate-100 py-1 last:border-0">
+                      <span className="min-w-[140px] font-medium text-slate-500">{p.key || 'Value'}</span>
+                      <span className="text-slate-800 font-medium">{p.val}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
