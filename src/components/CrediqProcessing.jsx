@@ -163,7 +163,7 @@ function DynamicData({ data: dynamicData, searchQuery = '' }) {
           // Split by | and find all key:value pairs that contain the search term
           const allParts = preview.split('|').map(p => p.trim()).filter(Boolean)
           
-          // Parse each part into {key, value} — take only the last two segments of nested keys
+          // Parse each part — take only last two colon-separated segments as key:val
           const parsed = allParts.map(part => {
             const segments = part.split(': ')
             if (segments.length >= 2) {
@@ -174,18 +174,21 @@ function DynamicData({ data: dynamicData, searchQuery = '' }) {
             return { key: '', val: part, full: part }
           })
 
-          // Filter to only show parts that match the search query
+          // Show ONLY parts that match the search query
+          const sq = searchQuery.toLowerCase()
           const matched = parsed.filter(p =>
-            p.full.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            p.key.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            p.val.toLowerCase().includes(searchQuery.toLowerCase())
+            p.key.toLowerCase().includes(sq) ||
+            p.val.toLowerCase().includes(sq) ||
+            p.full.toLowerCase().includes(sq)
           )
+
+          // If nothing matched by field, show first 5 as fallback
           const display = matched.length > 0 ? matched : parsed.slice(0, 5)
 
           // Deduplicate by key+val
           const seen = new Set()
           const unique = display.filter(p => {
-            const k = p.key + p.val
+            const k = `${p.key}:${p.val}`
             if (seen.has(k)) return false
             seen.add(k)
             return true
