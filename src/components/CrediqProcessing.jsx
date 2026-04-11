@@ -337,25 +337,18 @@ export default function CrediqProcessing({
     setProcessData(null)
 
     try {
-      const isOcr = selectedOption === 'ocr_all_documents' || selectedOption === 'invoice'
       const userInstruction = fileQueries[fileNames[0]] || 'None'
 
-      if (isOcr) {
-        // Call /api/ocr for OCR document types
-        const result = await runOcr(fileNames[0], selectedOption, userInstruction)
-        setProcessData({
-          isOcrResult: true,
-          output: result?.output ?? result,
-        })
-      } else {
-        // Call /api/process for identity cards, bank statements etc.
-        const responseData = await processDocument({
-          fileName: fileNames[0],
-          documentType: selectedOption,
-          userInstruction,
-        })
-        setProcessData({ responseType: selectedOption, response: responseData })
-      }
+      // Always use /api/process — it extracts ALL pages and handles all document types
+      const responseData = await processDocument({
+        fileName: fileNames[0],
+        documentType: selectedOption,
+        userInstruction,
+      })
+      setProcessData({
+        isOcrResult: true,
+        output: responseData?.body ?? responseData,
+      })
 
       setIsButtonHidden(true)
       setShowAdvancedSearch(false)
