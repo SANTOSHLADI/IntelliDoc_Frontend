@@ -158,22 +158,45 @@ function DynamicData({ data: dynamicData }) {
         <p className="text-sm text-slate-500">
           Found <strong>{results.length}</strong> document{results.length > 1 ? 's' : ''} matching your search
         </p>
-        {results.map((result, i) => (
-          <div key={i} className="rounded-xl border border-[#d8e0ef] bg-white p-4 shadow-sm">
-            <div className="mb-3">
-              <p className="text-sm font-semibold text-[#214aa6]">{result.fileName}</p>
-              <p className="text-xs text-slate-400">
-                Type: {result.documentType} | Relevance: {result.score} | Indexed: {result.indexedAt ? new Date(result.indexedAt).toLocaleString() : 'N/A'}
-              </p>
-            </div>
-            {result.preview && (
-              <div className="rounded-lg bg-[#f4f6fa] px-4 py-3 text-sm text-slate-700">
-                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">Matched Content</p>
-                <p>{result.preview}</p>
+        {results.map((result, i) => {
+          // Extract only the part of preview that matches the search query
+          const preview = result.preview || ''
+          const parts = preview.split('|').map(p => p.trim()).filter(Boolean)
+          const matchedParts = parts.filter(p =>
+            p.toLowerCase().includes(searchQuery.toLowerCase())
+          )
+          const displayParts = matchedParts.length > 0 ? matchedParts : parts.slice(0, 3)
+
+          return (
+            <div key={i} className="rounded-xl border border-[#d8e0ef] bg-white p-4 shadow-sm">
+              <div className="mb-3">
+                <p className="text-sm font-semibold text-[#214aa6]">{result.fileName}</p>
+                <p className="text-xs text-slate-400">
+                  Type: {result.documentType} | Relevance: {result.score} | Indexed: {result.indexedAt ? new Date(result.indexedAt).toLocaleString() : 'N/A'}
+                </p>
               </div>
-            )}
-          </div>
-        ))}
+              <div className="rounded-lg bg-[#f4f6fa] px-4 py-3 text-sm text-slate-700">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Matched Fields</p>
+                <div className="flex flex-col gap-1">
+                  {displayParts.map((part, pi) => {
+                    const colonIdx = part.indexOf(': ')
+                    if (colonIdx > 0) {
+                      const key = part.slice(0, colonIdx)
+                      const val = part.slice(colonIdx + 2)
+                      return (
+                        <div key={pi} className="flex gap-2">
+                          <span className="min-w-[120px] font-medium text-slate-500">{key}</span>
+                          <span className="text-slate-700">{val}</span>
+                        </div>
+                      )
+                    }
+                    return <p key={pi}>{part}</p>
+                  })}
+                </div>
+              </div>
+            </div>
+          )
+        })}
       </div>
     )
   }
