@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
-import { Rocket, Search, X, Loader2, Download } from 'lucide-react'
+import { Rocket, Search, X, Loader2 } from 'lucide-react'
 import { processDocument, runOcr, searchDocuments } from '../api'
+import PdfDownload from './PdfDownload'
 
 function formatKey(key) {
   if (!key) return ''
@@ -413,13 +414,15 @@ export default function CrediqProcessing({
         <>
           {!processData.isSearchResult && (
             <div className="mb-3 flex justify-end">
-              <button
-                onClick={() => toast.info('Connect PdfDownload component for PDF export.')}
-                className="inline-flex items-center gap-2 rounded-xl bg-[#214aa6] px-5 py-2 text-sm font-medium text-white transition hover:bg-[#17367c]"
-              >
-                <Download className="h-4 w-4" />
-                Download PDF
-              </button>
+              <PdfDownload
+                fileName={fileNames[0]}
+                documentType={selectedOption}
+                data={
+                  processData.isOcrResult
+                    ? processData.output
+                    : processData.response?.body
+                }
+              />
             </div>
           )}
           <DynamicData data={processData} />
