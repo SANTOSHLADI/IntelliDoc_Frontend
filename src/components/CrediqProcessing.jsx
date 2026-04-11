@@ -92,28 +92,36 @@ function DataTable({ items, title }) {
   )
 }
 
+function tryParseJson(str) {
+  if (typeof str !== 'string') return str
+  try {
+    const match = str.match(/<response>([\s\S]*?)<\/response>/)
+    if (match) return JSON.parse(match[1].trim())
+    const start = str.indexOf('{')
+    const end = str.lastIndexOf('}') + 1
+    if (start >= 0 && end > start) return JSON.parse(str.slice(start, end))
+  } catch {}
+  return str
+}
+
 function DynamicData({ data: dynamicData }) {
   // Handle OCR output (string or object from /api/ocr)
   if (dynamicData?.isOcrResult) {
-    const output = dynamicData.output
-    if (!output) return <p className="text-sm text-slate-500">No data to display.</p>
+    const rawOutput = dynamicData.output
+    if (!rawOutput) return <p className="text-sm text-slate-500">No data to display.</p>
 
-    if (typeof output === 'string') {
-      return (
-        <div className="my-4 rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
-          <h2 className="mb-3 text-base font-semibold text-slate-700">Extracted Content</h2>
-          <pre className="whitespace-pre-wrap text-sm text-slate-700">{output}</pre>
-        </div>
+    const output = tryParseJson(rawOutput)
+
+    if (typeof output === 'object' && output !== null) {
+      const entries = Object.entries(output).filter(([k, v]) =>
+        v !== null && v !== undefined && v !== '' && k !== '_document_type'
       )
-    }
-
-    if (typeof output === 'object') {
       return (
         <div className="my-4 rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
           <h2 className="mb-3 text-base font-semibold text-slate-700">Extracted Content</h2>
           <table className="min-w-full border-collapse text-sm">
             <tbody>
-              {Object.entries(output).map(([k, v]) => (
+              {entries.map(([k, v]) => (
                 <tr key={k} className="hover:bg-slate-50">
                   <td className="w-1/3 border bg-slate-50 px-4 py-2 font-medium">{formatKey(k)}</td>
                   <td className="border px-4 py-2">{renderValue(v)}</td>
@@ -124,38 +132,45 @@ function DynamicData({ data: dynamicData }) {
         </div>
       )
     }
+
+    // Plain text output
+    return (
+      <div className="my-4 rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
+        <h2 className="mb-3 text-base font-semibold text-slate-700">Extracted Content</h2>
+        <pre className="whitespace-pre-wrap text-sm text-slate-700">{output}</pre>
+      </div>
+    )
   }
 
   // Handle search results
   if (dynamicData?.isSearchResult) {
     const results = dynamicData.results
     if (!results || results.length === 0) {
-      return <p className="text-sm text-slate-500">No search results found.</p>
+      return (
+        <div className="my-4 rounded-xl border border-amber-100 bg-amber-50 p-4 text-sm text-amber-700">
+          No documents found. Try searching for a specific value like a name, number, or company.
+          For example: <strong>32AABBA790B1ZB</strong> or <strong>Shiv Engineering</strong>
+        </div>
+      )
     }
     return (
       <div className="my-4 flex flex-col gap-4">
-        <h2 className="text-base font-semibold text-slate-700">Search Results ({results.length})</h2>
+        <p className="text-sm text-slate-500">
+          Found <strong>{results.length}</strong> document{results.length > 1 ? 's' : ''} matching your search
+        </p>
         {results.map((result, i) => (
-          <div key={i} className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
-            <h3 className="mb-2 text-sm font-semibold text-[#214aa6]">
-              {result.file_name || result.document_id || `Result ${i + 1}`}
-            </h3>
-            <table className="min-w-full border-collapse text-sm">
-              <tbody>
-                {Object.entries(result)
-                  .filter(([k]) => !['@search.score', '@search.rerankerScore'].includes(k))
-                  .map(([k, v]) => (
-                    <tr key={k} className="hover:bg-slate-50">
-                      <td className="w-1/3 border bg-slate-50 px-4 py-2 font-medium">{formatKey(k)}</td>
-                      <td className="border px-4 py-2">{renderValue(v)}</td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-            {result['@search.score'] && (
-              <p className="mt-2 text-xs text-slate-400">
-                Relevance score: {result['@search.score'].toFixed(2)}
+          <div key={i} className="rounded-xl border border-[#d8e0ef] bg-white p-4 shadow-sm">
+            <div className="mb-3">
+              <p className="text-sm font-semibold text-[#214aa6]">{result.fileName}</p>
+              <p className="text-xs text-slate-400">
+                Type: {result.documentType} | Relevance: {result.score} | Indexed: {result.indexedAt ? new Date(result.indexedAt).toLocaleString() : 'N/A'}
               </p>
+            </div>
+            {result.preview && (
+              <div className="rounded-lg bg-[#f4f6fa] px-4 py-3 text-sm text-slate-700">
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">Matched Content</p>
+                <p>{result.preview}</p>
+              </div>
             )}
           </div>
         ))}
