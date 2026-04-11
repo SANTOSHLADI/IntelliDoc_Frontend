@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
 import { Rocket, Search, X, Loader2, Download } from 'lucide-react'
-import { processDocument } from '../api'
+import { processDocument, runOcr, searchDocuments } from '../api'
 
 function formatKey(key) {
   if (!key) return ''
@@ -92,6 +92,77 @@ function DataTable({ items, title }) {
 }
 
 function DynamicData({ data: dynamicData }) {
+  // Handle OCR output (string or object from /api/ocr)
+  if (dynamicData?.isOcrResult) {
+    const output = dynamicData.output
+    if (!output) return <p className="text-sm text-slate-500">No data to display.</p>
+
+    if (typeof output === 'string') {
+      return (
+        <div className="my-4 rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
+          <h2 className="mb-3 text-base font-semibold text-slate-700">Extracted Content</h2>
+          <pre className="whitespace-pre-wrap text-sm text-slate-700">{output}</pre>
+        </div>
+      )
+    }
+
+    if (typeof output === 'object') {
+      return (
+        <div className="my-4 rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
+          <h2 className="mb-3 text-base font-semibold text-slate-700">Extracted Content</h2>
+          <table className="min-w-full border-collapse text-sm">
+            <tbody>
+              {Object.entries(output).map(([k, v]) => (
+                <tr key={k} className="hover:bg-slate-50">
+                  <td className="w-1/3 border bg-slate-50 px-4 py-2 font-medium">{formatKey(k)}</td>
+                  <td className="border px-4 py-2">{renderValue(v)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )
+    }
+  }
+
+  // Handle search results
+  if (dynamicData?.isSearchResult) {
+    const results = dynamicData.results
+    if (!results || results.length === 0) {
+      return <p className="text-sm text-slate-500">No search results found.</p>
+    }
+    return (
+      <div className="my-4 flex flex-col gap-4">
+        <h2 className="text-base font-semibold text-slate-700">Search Results ({results.length})</h2>
+        {results.map((result, i) => (
+          <div key={i} className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
+            <h3 className="mb-2 text-sm font-semibold text-[#214aa6]">
+              {result.file_name || result.document_id || `Result ${i + 1}`}
+            </h3>
+            <table className="min-w-full border-collapse text-sm">
+              <tbody>
+                {Object.entries(result)
+                  .filter(([k]) => !['@search.score', '@search.rerankerScore'].includes(k))
+                  .map(([k, v]) => (
+                    <tr key={k} className="hover:bg-slate-50">
+                      <td className="w-1/3 border bg-slate-50 px-4 py-2 font-medium">{formatKey(k)}</td>
+                      <td className="border px-4 py-2">{renderValue(v)}</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+            {result['@search.score'] && (
+              <p className="mt-2 text-xs text-slate-400">
+                Relevance score: {result['@search.score'].toFixed(2)}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  // Handle standard process response
   if (!dynamicData?.response?.body || Object.keys(dynamicData.response.body).length === 0) {
     return <p className="text-sm text-slate-500">No data to display.</p>
   }
@@ -109,28 +180,6 @@ function DynamicData({ data: dynamicData }) {
   )
 
   if (Object.keys(filteredData).length === 0) return <p className="text-sm text-slate-500">No valid data.</p>
-
-  if (responseType === 'Loan Application') {
-    return (
-      <div className="my-4 flex flex-col gap-4 rounded-xl bg-slate-50 p-4">
-        {Object.entries(data).map(([parentKey, children], pi) => (
-          <div key={pi} className="overflow-x-auto rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
-            <h2 className="mb-3 text-base font-semibold text-slate-700">{parentKey}</h2>
-            <table className="min-w-full border-collapse text-sm">
-              <tbody>
-                {Object.entries(children || {}).map(([ck, cv], ci) => (
-                  <tr key={ci} className="hover:bg-slate-50">
-                    <td className="w-1/3 border bg-slate-50 px-4 py-2 font-medium">{formatKey(ck)}</td>
-                    <td className="max-w-lg overflow-auto whitespace-pre-wrap border px-4 py-2">{cv || 'N/A'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ))}
-      </div>
-    )
-  }
 
   if (responseType === 'identity_card') {
     const flatten = (obj, prefix = '') =>
@@ -156,10 +205,7 @@ function DynamicData({ data: dynamicData }) {
               {keys.map((k) => (
                 <tr key={k} className="hover:bg-slate-50">
                   <td className="w-1/3 border bg-slate-50 px-4 py-2 font-medium">{formatKey(k)}</td>
-                  <td
-                    className="border px-4 py-2"
-                    style={k.toLowerCase().includes('address') ? { maxHeight: 80, overflowY: 'auto' } : {}}
-                  >
+                  <td className="border px-4 py-2">
                     {Array.isArray(flat[k]) ? flat[k].join(', ') : flat[k] || 'N/A'}
                   </td>
                 </tr>
@@ -167,118 +213,6 @@ function DynamicData({ data: dynamicData }) {
             </tbody>
           </table>
         </div>
-      </div>
-    )
-  }
-
-  if (responseType === 'bank_statement' || responseType === 'cdsl_report') {
-    return (
-      <div className="my-4 flex flex-col gap-4 rounded-xl bg-slate-50 p-4">
-        {Object.entries(data).map(([sectionKey, sectionValue], si) => {
-          if (sectionValue === null || sectionValue === undefined) return null
-          if (typeof sectionValue !== 'object') {
-            return (
-              <div key={si} className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
-                <span className="font-semibold">{formatKey(sectionKey)}:</span>{' '}
-                <span>{String(sectionValue)}</span>
-              </div>
-            )
-          }
-          if (Array.isArray(sectionValue)) {
-            return <DataTable key={si} items={sectionValue} title={sectionKey} />
-          }
-          return (
-            <div key={si} className="overflow-x-auto rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
-              <h2 className="mb-3 text-base font-semibold">{formatKey(sectionKey)}</h2>
-              <table className="min-w-full border-collapse text-sm">
-                <tbody>
-                  {Object.entries(sectionValue).map(([k, v], i) => (
-                    <tr key={i} className="hover:bg-slate-50">
-                      <td className="w-1/3 border bg-slate-50 px-4 py-2 font-medium">{formatKey(k)}</td>
-                      <td className="border px-4 py-2">{renderValue(v)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )
-        })}
-      </div>
-    )
-  }
-
-  if (responseType === 'invoice' || responseType === 'ocr_all_documents') {
-    const documents = Array.isArray(data) ? data : [data]
-    return (
-      <div className="my-4 flex flex-col gap-4 rounded-xl bg-slate-50 p-4">
-        {documents.map((doc, di) => {
-          if (!doc || typeof doc !== 'object') return null
-
-          if (doc.content && Array.isArray(doc.content)) {
-            return (
-              <div key={di} className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
-                {doc.title && <h2 className="mb-3 text-base font-semibold">{doc.title}</h2>}
-                {doc.content.map((block, bi) => {
-                  switch (block.type) {
-                    case 'text':
-                      return <p key={bi} className="mb-2 text-sm">{block.content}</p>
-                    case 'heading':
-                      return <h3 key={bi} className="mb-1 mt-3 text-sm font-semibold">{block.content}</h3>
-                    case 'list':
-                      return (
-                        <ul key={bi} className="mb-2 list-disc space-y-1 pl-5 text-sm">
-                          {block.items?.map((item, ii) => (
-                            <li key={ii}>{item.replace(/^\*/, '').trim()}</li>
-                          ))}
-                        </ul>
-                      )
-                    case 'table':
-                      return (
-                        <div key={bi} className="mb-4 overflow-x-auto">
-                          <table className="min-w-full border-collapse text-sm">
-                            <thead className="bg-slate-100">
-                              <tr>
-                                {block.headers?.map((h, hi) => (
-                                  <th key={hi} className="border px-4 py-2 font-semibold">{h}</th>
-                                ))}
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {block.rows?.map((row, ri) => (
-                                <tr key={ri} className="hover:bg-slate-50">
-                                  {row.map((cell, ci) => (
-                                    <td key={ci} className="border px-4 py-2">{cell}</td>
-                                  ))}
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      )
-                    default:
-                      return null
-                  }
-                })}
-              </div>
-            )
-          }
-
-          return (
-            <div key={di} className="overflow-x-auto rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
-              <h2 className="mb-3 text-base font-semibold">Document {di + 1}</h2>
-              <table className="min-w-full border-collapse text-sm">
-                <tbody>
-                  {Object.entries(doc).map(([k, v]) => (
-                    <tr key={k} className="hover:bg-slate-50">
-                      <td className="w-1/3 border bg-slate-50 px-4 py-2 font-medium">{formatKey(k)}</td>
-                      <td className="border px-4 py-2">{renderValue(v)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )
-        })}
       </div>
     )
   }
@@ -327,6 +261,8 @@ export default function CrediqProcessing({
   const [isButtonHidden, setIsButtonHidden] = useState(false)
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false)
   const [fileQueries, setFileQueries] = useState({})
+  const [searchQuery, setSearchQuery] = useState('')
+  const [isSearching, setIsSearching] = useState(false)
 
   const fileNames = uploadedFileInfo.map((f) => f.name)
 
@@ -343,21 +279,58 @@ export default function CrediqProcessing({
     setProcessData(null)
 
     try {
-      const responseData = await processDocument({
-        fileName: fileNames[0],
-        documentType: selectedOption,
-        userInstruction: fileQueries[fileNames[0]] || 'None',
-      })
-      setProcessData({ responseType: selectedOption, response: responseData })
+      const isOcr = selectedOption === 'ocr_all_documents' || selectedOption === 'invoice'
+      const userInstruction = fileQueries[fileNames[0]] || 'None'
+
+      if (isOcr) {
+        // Call /api/ocr for OCR document types
+        const result = await runOcr(fileNames[0], selectedOption, userInstruction)
+        setProcessData({
+          isOcrResult: true,
+          output: result?.output ?? result,
+        })
+      } else {
+        // Call /api/process for identity cards, bank statements etc.
+        const responseData = await processDocument({
+          fileName: fileNames[0],
+          documentType: selectedOption,
+          userInstruction,
+        })
+        setProcessData({ responseType: selectedOption, response: responseData })
+      }
+
       setIsButtonHidden(true)
       setShowAdvancedSearch(false)
     } catch (err) {
       console.error(err)
       setErrorMessage(err.message || 'An unexpected error occurred.')
       toast.error('Failed to process the document.')
-      setShowAdvancedSearch(false)
     } finally {
       setIsProcessing(false)
+    }
+  }
+
+  const handleAdvancedSearch = async () => {
+    if (!searchQuery.trim()) {
+      toast.error('Please enter a search query.')
+      return
+    }
+    setIsSearching(true)
+    setErrorMessage('')
+    try {
+      const result = await searchDocuments(searchQuery.trim(), selectedOption)
+      const results = result?.results ?? result?.value ?? []
+      setProcessData({
+        isSearchResult: true,
+        results,
+      })
+      setIsButtonHidden(true)
+    } catch (err) {
+      console.error(err)
+      setErrorMessage(err.message || 'Search failed.')
+      toast.error('Advanced search failed.')
+    } finally {
+      setIsSearching(false)
     }
   }
 
@@ -400,20 +373,33 @@ export default function CrediqProcessing({
         </div>
       )}
 
+      {/* Advanced Search Panel */}
       {showAdvancedSearch && (
-        <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {fileNames.map((file) => (
-            <div key={file} className="rounded-xl border border-[#d8e0ef] bg-white p-4 shadow-sm">
-              <p className="mb-1 truncate text-xs text-slate-500">{file}</p>
-              <input
-                type="text"
-                value={fileQueries[file] || ''}
-                onChange={(e) => setFileQueries((p) => ({ ...p, [file]: e.target.value }))}
-                placeholder="Enter your custom query..."
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#214aa6]"
-              />
-            </div>
-          ))}
+        <div className="mb-4 rounded-xl border border-[#d8e0ef] bg-white p-4 shadow-sm">
+          <p className="mb-2 text-sm font-semibold text-slate-600">
+            Search across all processed documents using Azure AI Search
+          </p>
+          <div className="flex gap-3">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAdvancedSearch()}
+              placeholder="e.g. PAN number, invoice amount, name..."
+              className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#214aa6]"
+            />
+            <button
+              onClick={handleAdvancedSearch}
+              disabled={isSearching}
+              className="inline-flex items-center gap-2 rounded-xl bg-[#214aa6] px-5 py-2 text-sm font-medium text-white transition hover:bg-[#17367c] disabled:opacity-60"
+            >
+              {isSearching ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Searching...</>
+              ) : (
+                <><Search className="h-4 w-4" /> Search</>
+              )}
+            </button>
+          </div>
         </div>
       )}
 
@@ -423,19 +409,19 @@ export default function CrediqProcessing({
         </div>
       )}
 
-      {processData?.response?.body && (
+      {processData && (
         <>
-          <div className="mb-3 flex justify-end">
-            <button
-              onClick={() => {
-                toast.info('Connect PdfDownload component for PDF export.')
-              }}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#214aa6] px-5 py-2 text-sm font-medium text-white transition hover:bg-[#17367c]"
-            >
-              <Download className="h-4 w-4" />
-              Download PDF
-            </button>
-          </div>
+          {!processData.isSearchResult && (
+            <div className="mb-3 flex justify-end">
+              <button
+                onClick={() => toast.info('Connect PdfDownload component for PDF export.')}
+                className="inline-flex items-center gap-2 rounded-xl bg-[#214aa6] px-5 py-2 text-sm font-medium text-white transition hover:bg-[#17367c]"
+              >
+                <Download className="h-4 w-4" />
+                Download PDF
+              </button>
+            </div>
+          )}
           <DynamicData data={processData} />
         </>
       )}
