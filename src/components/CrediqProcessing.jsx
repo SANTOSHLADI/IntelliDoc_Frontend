@@ -105,30 +105,54 @@ function tryParseJson(str) {
 }
 
 function DynamicData({ data: dynamicData, searchQuery = '' }) {
-  // Handle OCR output (string or object from /api/ocr)
+  // Handle extracted content from /api/process
   if (dynamicData?.isOcrResult) {
     const rawOutput = dynamicData.output
     if (!rawOutput) return <p className="text-sm text-slate-500">No data to display.</p>
 
-    const output = tryParseJson(rawOutput)
+    // rawOutput can be object (from /api/process) or string (from /api/ocr)
+    const output = typeof rawOutput === 'object' ? rawOutput : tryParseJson(rawOutput)
 
-    if (typeof output === 'object' && output !== null) {
+    if (typeof output === 'object' && output !== null && !Array.isArray(output)) {
       const entries = Object.entries(output).filter(([k, v]) =>
         v !== null && v !== undefined && v !== '' && k !== '_document_type'
       )
+      if (entries.length === 0) return <p className="text-sm text-slate-500">No data extracted.</p>
       return (
-        <div className="my-4 rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
-          <h2 className="mb-3 text-base font-semibold text-slate-700">Extracted Content</h2>
-          <table className="min-w-full border-collapse text-sm">
-            <tbody>
-              {entries.map(([k, v]) => (
-                <tr key={k} className="hover:bg-slate-50">
-                  <td className="w-1/3 border bg-slate-50 px-4 py-2 font-medium">{formatKey(k)}</td>
-                  <td className="border px-4 py-2">{renderValue(v)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="my-4 flex flex-col gap-4">
+          {entries.map(([k, v]) => {
+            if (typeof v === 'object' && v !== null && !Array.isArray(v)) {
+              return (
+                <div key={k} className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
+                  <h3 className="mb-3 text-sm font-semibold text-[#214aa6]">{formatKey(k)}</h3>
+                  <table className="min-w-full border-collapse text-sm">
+                    <tbody>
+                      {Object.entries(v).filter(([,val]) => val !== null && val !== '').map(([sk, sv]) => (
+                        <tr key={sk} className="hover:bg-slate-50">
+                          <td className="w-1/3 border bg-slate-50 px-4 py-2 font-medium">{formatKey(sk)}</td>
+                          <td className="border px-4 py-2">{renderValue(sv)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )
+            }
+            if (Array.isArray(v)) {
+              return (
+                <div key={k} className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
+                  <h3 className="mb-3 text-sm font-semibold text-[#214aa6]">{formatKey(k)}</h3>
+                  <DataTable items={v} title={k} />
+                </div>
+              )
+            }
+            return (
+              <div key={k} className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
+                <span className="font-semibold text-slate-600">{formatKey(k)}: </span>
+                <span className="text-slate-800">{String(v)}</span>
+              </div>
+            )
+          })}
         </div>
       )
     }
@@ -137,7 +161,7 @@ function DynamicData({ data: dynamicData, searchQuery = '' }) {
     return (
       <div className="my-4 rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
         <h2 className="mb-3 text-base font-semibold text-slate-700">Extracted Content</h2>
-        <pre className="whitespace-pre-wrap text-sm text-slate-700">{output}</pre>
+        <pre className="whitespace-pre-wrap text-sm text-slate-700">{String(output)}</pre>
       </div>
     )
   }
