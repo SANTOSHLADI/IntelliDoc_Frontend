@@ -363,16 +363,28 @@ export default function CrediqProcessing({
     try {
       const userInstruction = fileQueries[fileNames[0]] || 'None'
 
-      // Always use /api/process — it extracts ALL pages and handles all document types
-      const responseData = await processDocument({
-        fileName: fileNames[0],
-        documentType: selectedOption,
-        userInstruction,
-      })
-      setProcessData({
-        isOcrResult: true,
-        output: responseData?.body ?? responseData,
-      })
+      // Use /api/ocr for general documents (extracts freely without template)
+      // Use /api/process only for structured identity documents
+      const isStructured = ['pan', 'aadhaar', 'passport', 'voter_id', 'driving_license'].includes(selectedOption)
+
+      if (isStructured) {
+        const responseData = await processDocument({
+          fileName: fileNames[0],
+          documentType: selectedOption,
+          userInstruction,
+        })
+        setProcessData({
+          isOcrResult: true,
+          output: responseData?.body ?? responseData,
+        })
+      } else {
+        // ocr_all_documents, invoice — use /api/ocr for free-form extraction
+        const result = await runOcr(fileNames[0], selectedOption, userInstruction)
+        setProcessData({
+          isOcrResult: true,
+          output: result?.output ?? result,
+        })
+      }
 
       setIsButtonHidden(true)
       setShowAdvancedSearch(false)
