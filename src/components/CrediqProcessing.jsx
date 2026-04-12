@@ -363,28 +363,16 @@ export default function CrediqProcessing({
     try {
       const userInstruction = fileQueries[fileNames[0]] || 'None'
 
-      // Use /api/ocr for general documents (extracts freely without template)
-      // Use /api/process only for structured identity documents
-      const isStructured = ['pan', 'aadhaar', 'passport', 'voter_id', 'driving_license', 'marks_card', 'bank_statement', 'invoice', 'loan_application', 'cdsl_report'].includes(selectedOption)
-
-      if (isStructured) {
-        const responseData = await processDocument({
-          fileName: fileNames[0],
-          documentType: selectedOption,
-          userInstruction,
-        })
-        setProcessData({
-          isOcrResult: true,
-          output: responseData?.body ?? responseData,
-        })
-      } else {
-        // ocr_all_documents, invoice — use /api/ocr for free-form extraction
-        const result = await runOcr(fileNames[0], selectedOption, userInstruction)
-        setProcessData({
-          isOcrResult: true,
-          output: result?.output ?? result,
-        })
-      }
+      // Always use /api/process — auto-classifies if no documentType given
+      const responseData = await processDocument({
+        fileName: fileNames[0],
+        documentType: selectedOption === 'auto' ? undefined : selectedOption,
+        userInstruction,
+      })
+      setProcessData({
+        isOcrResult: true,
+        output: responseData?.body ?? responseData,
+      })
 
       setIsButtonHidden(true)
       setShowAdvancedSearch(false)
@@ -405,8 +393,13 @@ export default function CrediqProcessing({
     setIsSearching(true)
     setErrorMessage('')
     try {
-      const result = await searchDocuments(searchQuery.trim(), selectedOption)
-      const results = result?.results ?? result?.value ?? []
+      let result = await searchDocuments(searchQuery.trim(), selectedOption === 'auto' ? null : selectedOption)
+      let results = result?.results ?? result?.value ?? []
+      // retry once with no type filter if empty
+      if (results.length === 0) {
+        result = await searchDocuments(searchQuery.trim(), null)
+        results = result?.results ?? result?.value ?? []
+      }
       setProcessData({
         isSearchResult: true,
         results,
