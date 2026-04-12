@@ -4,7 +4,7 @@ import UploadFile from './UploadFile'
 import CrediqProcessing from './CrediqProcessing'
 
 const DOCUMENT_TYPE = 'auto'
-const DOCUMENT_TYPE_LABEL = 'Auto Detect'
+const DOCUMENT_TYPE_LABEL = 'OCR Documents (PDF, DOCX, JPG, PNG, JPEG)'
 
 export default function CREDIQ() {
   const [selectedFiles, setSelectedFiles] = useState([])
