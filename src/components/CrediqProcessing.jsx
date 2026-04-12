@@ -393,13 +393,9 @@ export default function CrediqProcessing({
     setIsSearching(true)
     setErrorMessage('')
     try {
-      let result = await searchDocuments(searchQuery.trim(), selectedOption === 'auto' ? null : selectedOption)
+      const currentFile = fileNames[0] || null
+      let result = await searchDocuments(searchQuery.trim(), null, 5, currentFile)
       let results = result?.results ?? result?.value ?? []
-      // retry once with no type filter if empty
-      if (results.length === 0) {
-        result = await searchDocuments(searchQuery.trim(), null)
-        results = result?.results ?? result?.value ?? []
-      }
       setProcessData({
         isSearchResult: true,
         results,

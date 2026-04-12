@@ -89,11 +89,11 @@ export const runOcr = async (fileKey, documentType = 'ocr_all_documents', userIn
 /**
  * Semantic / keyword search over indexed documents
  */
-export const searchDocuments = async (query, documentType = null, top = 5) => {
+export const searchDocuments = async (query, documentType = null, top = 5, fileName = null) => {
   const response = await fetch(`${AZURE_FUNC_BASE}/search`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query, document_type: documentType, top }),
+    body: JSON.stringify({ query, document_type: documentType, top, file_name: fileName }),
   })
   if (!response.ok) throw new Error('Search failed')
   return response.json()
