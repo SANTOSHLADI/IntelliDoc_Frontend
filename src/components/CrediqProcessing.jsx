@@ -365,7 +365,7 @@ export default function CrediqProcessing({
 
       // Use /api/ocr for general documents (extracts freely without template)
       // Use /api/process only for structured identity documents
-      const isStructured = ['pan', 'aadhaar', 'passport', 'voter_id', 'driving_license'].includes(selectedOption)
+      const isStructured = ['pan', 'aadhaar', 'passport', 'voter_id', 'driving_license', 'marks_card', 'bank_statement', 'invoice', 'loan_application', 'cdsl_report'].includes(selectedOption)
 
       if (isStructured) {
         const responseData = await processDocument({
