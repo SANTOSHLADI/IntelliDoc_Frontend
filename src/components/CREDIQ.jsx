@@ -63,7 +63,7 @@ export default function CREDIQ() {
     <div className="rounded-[18px] border border-[#d8e0ef] bg-white p-4 shadow-[0_8px_30px_rgba(15,23,42,0.04)] sm:p-6 lg:p-7">
       <div className="mb-6 flex flex-col gap-4 border-b border-[#e8edf6] pb-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="pt-2">
-          <p className="text-[15px] font-medium text-[#214aa6]">Click to see the Generative AI in Action</p>
+          {/* <p className="text-[15px] font-medium text-[#214aa6]"></p> */}
         </div>
 
         <div className="w-full max-w-[300px]">
