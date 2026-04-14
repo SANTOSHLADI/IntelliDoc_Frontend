@@ -3,7 +3,6 @@ import { toast } from 'react-toastify'
 import { Rocket, Search, X, Loader2 } from 'lucide-react'
 import { processDocument, runOcr, searchDocuments } from '../api'
 import PdfDownload from './PdfDownload'
-import AadhaarCardView from './AadhaarCardView'
 
 function formatKey(key) {
   if (!key) return ''
@@ -115,9 +114,6 @@ function DynamicData({ data: dynamicData, searchQuery = '' }) {
     const output = typeof rawOutput === 'object' ? rawOutput : tryParseJson(rawOutput)
 
     if (typeof output === 'object' && output !== null && !Array.isArray(output)) {
-      if (output._document_type === 'aadhaar' || output.aadhaar_number) {
-        return <AadhaarCardView data={output} />
-      }
       const entries = Object.entries(output).filter(([k, v]) =>
         v !== null && v !== undefined && v !== '' && k !== '_document_type'
       )
@@ -268,70 +264,36 @@ function DynamicData({ data: dynamicData, searchQuery = '' }) {
   if (Object.keys(filteredData).length === 0) return <p className="text-sm text-slate-500">No valid data.</p>
 
   if (responseType === 'identity_card') {
-    const formatAddress = (addr) => {
-      if (!addr) return null
-      if (typeof addr === 'string') return addr
-      return Object.values(addr).filter(Boolean).join(', ')
-    }
+    const flatten = (obj, prefix = '') =>
+      Object.keys(obj).reduce((acc, key) => {
+        const pk = prefix ? `${prefix}_${key}` : key
+        if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+          Object.assign(acc, flatten(obj[key], pk))
+        } else {
+          acc[pk] = typeof obj[key] === 'boolean' ? obj[key].toString() : obj[key]
+        }
+        return acc
+      }, {})
 
-    const isPan = data.pan_number
-    const isPassport = data.passport_number
-    const isDL = data.dl_number
-    const isVoter = data.epic_number
-
-    let cardTitle = 'Aadhaar Card'
-    let cardSubtitle = 'Government of India'
-    let cardBody = 'Unique Identification Authority of India'
-    let cardDesc = 'This is an Aadhaar card issued by the Government of India.'
-
-    if (isPan) { cardTitle = 'PAN Card'; cardBody = 'Income Tax Department'; cardDesc = 'Permanent Account Number card issued by the Income Tax Department.' }
-    else if (isPassport) { cardTitle = 'Passport'; cardBody = 'Ministry of External Affairs'; cardDesc = 'Passport issued by the Government of India.' }
-    else if (isDL) { cardTitle = 'Driving Licence'; cardBody = 'Ministry of Road Transport & Highways'; cardDesc = 'Driving licence issued by the Regional Transport Office.' }
-    else if (isVoter) { cardTitle = 'Voter ID Card'; cardBody = 'Election Commission of India'; cardDesc = 'Electoral Photo Identity Card issued by the Election Commission of India.' }
-
-    const fields = []
-    const add = (label, value) => { if (value) fields.push({ label, value }) }
-
-    add('Name', data.name || (data.surname ? `${data.surname} ${data.given_names || ''}`.trim() : null))
-    add("Father's Name", data.father_name)
-    add('Father / Husband Name', data.father_or_husband_name)
-    add('Gender', data.gender)
-    add('Date of Birth', data.date_of_birth || data.dob)
-    add('Nationality', data.nationality)
-    add('Place of Birth', data.place_of_birth)
-    add('Enrollment No.', data.enrollment_no || (data.aadhaar_number ? 'XXXX/XXXXX/XXXXX' : null))
-    add('Aadhaar No.', data.aadhaar_number)
-    add('PAN Number', data.pan_number)
-    add('Passport Number', data.passport_number)
-    add('Issue Date', data.issue_date)
-    add('Expiry Date', data.expiry_date)
-    add('Issuing Authority', data.issuing_authority)
-    add('DL Number', data.dl_number)
-    add('EPIC Number', data.epic_number)
-    add('Part Number', data.part_number)
-    add('Vehicle Classes', Array.isArray(data.vehicle_classes) ? data.vehicle_classes.join(', ') : data.vehicle_classes)
-    add('Issuing RTO', data.issuing_rto)
-    add('Address', formatAddress(data.address))
+    const flat = flatten(data)
+    const keys = Object.keys(flat)
 
     return (
-      <div className="my-4 max-w-2xl">
-        <div className="rounded border border-slate-200 bg-white">
-          <div className="border-b border-slate-200 px-5 py-4">
-            <h2 className="text-lg font-semibold text-slate-800">{cardTitle}</h2>
-            <p className="mt-1 text-sm font-semibold text-[#214aa6]">{cardSubtitle}</p>
-            <p className="mt-0.5 text-sm font-bold text-[#214aa6]">{cardBody}</p>
-            <p className="mt-1 text-xs text-slate-500">{cardDesc}</p>
-          </div>
-          <div className="divide-y divide-slate-100 px-5 py-2">
-            {fields.map(({ label, value }) => (
-              <div key={label} className="py-3">
-                <p className="mb-1 text-xs font-medium text-slate-500">{label}</p>
-                <div className="rounded border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800">
-                  {value}
-                </div>
-              </div>
-            ))}
-          </div>
+      <div className="my-4 rounded-xl bg-slate-50 p-4">
+        <div className="overflow-x-auto rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
+          <h2 className="mb-3 text-base font-semibold text-slate-700">ID Details</h2>
+          <table className="min-w-full border-collapse text-sm">
+            <tbody>
+              {keys.map((k) => (
+                <tr key={k} className="hover:bg-slate-50">
+                  <td className="w-1/3 border bg-slate-50 px-4 py-2 font-medium">{formatKey(k)}</td>
+                  <td className="border px-4 py-2">
+                    {Array.isArray(flat[k]) ? flat[k].join(', ') : flat[k] || 'N/A'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     )
