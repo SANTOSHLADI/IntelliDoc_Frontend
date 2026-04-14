@@ -3,8 +3,8 @@ import { toast } from 'react-toastify'
 import UploadFile from './UploadFile'
 import CrediqProcessing from './CrediqProcessing'
 
-const DOCUMENT_TYPE = 'auto'
-const DOCUMENT_TYPE_LABEL = 'OCR Documents (PDF, DOCX, JPG, PNG, JPEG)'
+const DOCUMENT_TYPE = 'ocr_all_documents'
+const DOCUMENT_TYPE_LABEL = 'OCR (All Documents)'
 
 export default function CREDIQ() {
   const [selectedFiles, setSelectedFiles] = useState([])
@@ -62,10 +62,6 @@ export default function CREDIQ() {
   return (
     <div className="rounded-[18px] border border-[#d8e0ef] bg-white p-4 shadow-[0_8px_30px_rgba(15,23,42,0.04)] sm:p-6 lg:p-7">
       <div className="mb-6 flex flex-col gap-4 border-b border-[#e8edf6] pb-6 lg:flex-row lg:items-start lg:justify-between">
-        <div className="pt-2">
-          {/* <p className="text-[15px] font-medium text-[#214aa6]"></p> */}
-        </div>
-
         <div className="w-full max-w-[300px]">
           <div className="w-full rounded-xl border border-[#cfd7e6] bg-[#f8fbff] px-4 py-3 text-[15px] font-medium text-slate-700 shadow-sm">
             {DOCUMENT_TYPE_LABEL}
