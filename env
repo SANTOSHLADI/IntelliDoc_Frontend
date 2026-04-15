@@ -1,0 +1,7 @@
+# Azure Function App base URL
+# Replace with your deployed Function App URL, e.g.:
+# VITE_API_BASE_URL=https://<your-function-app>.azurewebsites.net/api
+#
+# For local development with Azure Functions Core Tools (func start):
+VITE_API_BASE_URL=https://apim-intellidoc2.azure-api.net/intellidoc
+VITE_APIM_KEY=3f1434a682594afcbf8ab0f7a7cbf001
